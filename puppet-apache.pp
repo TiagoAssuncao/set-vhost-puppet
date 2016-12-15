@@ -23,19 +23,47 @@ create_index{
   "app3" : index => 3;
 }
 
-#
-# # Most basic vhost
-# apache::vhost { 'app1.4linux.com.br':
-#   port    => '80',
-#   docroot => "/var/www/${app1}/public_html",
-# }
-#
-# apache::vhost { 'app2.4linux.com.br':
-#   port    => '81',
-#   docroot => '/var/www/teste.networkabout.com/public_html',
-# }
-#
-# apache::vhost { 'app3.4linux.com.br':
-#   port    => '82',
-#   docroot => '/var/www/teste.networkabout.com/public_html',
-# }
+class apache2 {
+  package {'apache2':
+    ensure => present,
+  }
+  service {'apache2':
+    ensure => "running",
+    enable => "true",
+    require => Package["apache2"],
+  }
+  file { '/etc/ssh/sshd_config':
+    notify  => Service['apache2'],
+    owner   => 'root',
+    group   => 'root',
+    require => Package['apache2'],
+  }
+  apache::vhost { 'app1.4linux.com.br':
+    port    => '80',
+    docroot => "/var/www/app1.4linux.com.br/public_html",
+  }
+
+  apache::vhost { 'app2.4linux.com.br':
+    port    => '81',
+    docroot => '/var/www/app1.4linux.com.br/public_html',
+  }
+
+  apache::vhost { 'app3.4linux.com.br':
+    port    => '82',
+    docroot => '/var/www/app1.4linux.com.br/public_html',
+  }
+
+  exec { "reload":
+    command => "/etc/init.d/apache2 reload",
+    refreshonly => true,
+    require => Service[[apache2]],
+  }
+
+  exec { "restart":
+    command => "/etc/init.d/apache2 restart",
+    refreshonly => true,
+    require => Service[[apache2]],
+  }
+}
+
+include apache2
