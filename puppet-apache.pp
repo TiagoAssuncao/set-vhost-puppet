@@ -23,47 +23,61 @@ create_index{
   "app3" : index => 3;
 }
 
-class apache2 {
-  package {'apache2':
-    ensure => present,
-  }
-  service {'apache2':
-    ensure => "running",
-    enable => "true",
-    require => Package["apache2"],
-  }
-  file { '/etc/ssh/sshd_config':
-    notify  => Service['apache2'],
-    owner   => 'root',
-    group   => 'root',
-    require => Package['apache2'],
-  }
-  apache::vhost { 'app1.4linux.com.br':
-    port    => '80',
-    docroot => "/var/www/app1.4linux.com.br/public_html",
-  }
 
-  apache::vhost { 'app2.4linux.com.br':
-    port    => '81',
-    docroot => '/var/www/app1.4linux.com.br/public_html',
-  }
-
-  apache::vhost { 'app3.4linux.com.br':
-    port    => '82',
-    docroot => '/var/www/app1.4linux.com.br/public_html',
-  }
-
-  exec { "reload":
-    command => "/etc/init.d/apache2 reload",
-    refreshonly => true,
-    require => Service[[apache2]],
-  }
-
-  exec { "restart":
-    command => "/etc/init.d/apache2 restart",
-    refreshonly => true,
-    require => Service[[apache2]],
-  }
+apache::vhost { 'app1.4linux.com.br':
+  port    => '80',
+  docroot => "/var/www/app1.4linux.com.br/public_html",
+  docroot_owner => 'www-data',
+  docroot_group => 'www-data',
+  options       => ['Indexes','FollowSymLinks','MultiViews'],
+  override      => ['none'],
+  proxy_pass => [
+    {
+      'path' => '/app1',
+      'url'  => 'http://localhost:80/app1'
+    },
+  ],
 }
 
-include apache2
+apache::vhost { 'app2.4linux.com.br':
+  port    => '81',
+  docroot => '/var/www/app1.4linux.com.br/public_html',
+  docroot_owner => 'www-data',
+  docroot_group => 'www-data',
+  options       => ['Indexes','FollowSymLinks','MultiViews'],
+  override      => ['none'],
+  proxy_pass => [
+    {
+      'path' => '/app2',
+      'url'  => 'http://localhost:81/app2'
+    },
+  ],
+}
+
+apache::vhost { 'app3.4linux.com.br':
+  port    => '82',
+  docroot => '/var/www/app1.4linux.com.br/public_html',
+  docroot_owner => 'www-data',
+  docroot_group => 'www-data',
+  options       => ['Indexes','FollowSymLinks','MultiViews'],
+  override      => ['none'],
+  proxy_pass => [
+    {
+      'path' => '/app3',
+      'url'  => 'http://localhost:82/app3'
+    },
+  ],
+}
+
+exec { "reload":
+  command => "/etc/init.d/apache2 reload",
+  refreshonly => true,
+  require => Service[[apache2]],
+}
+
+exec { "restart":
+  command => "/etc/init.d/apache2 restart",
+  refreshonly => true,
+  require => Service[[apache2]],
+}
+
