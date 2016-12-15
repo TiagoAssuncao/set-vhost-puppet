@@ -1,6 +1,6 @@
 class { '::apache': }
 
-define create_index($index){
+define create_file($index){
   # create a directory      
   file {[
     "/var/www/app${index}.4linux.com.br",
@@ -17,67 +17,30 @@ define create_index($index){
   }
 }
 
-create_index{
+define set_vhosts($port, $index){
+  apache::vhost { 'app1.4linux.com.br':
+    port    => $port,
+    docroot => "/var/www/app${index}.4linux.com.br/public_html",
+    docroot_owner => 'www-data',
+    docroot_group => 'www-data',
+    options       => ['Indexes','FollowSymLinks','MultiViews'],
+    override      => ['none'],
+  }
+}
+
+create_file{
   "app1" : index => 1;
   "app2" : index => 2;
   "app3" : index => 3;
 }
 
-
-apache::vhost { 'app1.4linux.com.br':
-  port    => '80',
-  docroot => "/var/www/app1.4linux.com.br/public_html",
-  docroot_owner => 'www-data',
-  docroot_group => 'www-data',
-  options       => ['Indexes','FollowSymLinks','MultiViews'],
-  override      => ['none'],
-  proxy_pass => [
-    {
-      'path' => '/app1',
-      'url'  => 'http://localhost:80/app1'
-    },
-  ],
-}
-
-apache::vhost { 'app2.4linux.com.br':
-  port    => '81',
-  docroot => '/var/www/app1.4linux.com.br/public_html',
-  docroot_owner => 'www-data',
-  docroot_group => 'www-data',
-  options       => ['Indexes','FollowSymLinks','MultiViews'],
-  override      => ['none'],
-  proxy_pass => [
-    {
-      'path' => '/app2',
-      'url'  => 'http://localhost:81/app2'
-    },
-  ],
-}
-
-apache::vhost { 'app3.4linux.com.br':
-  port    => '82',
-  docroot => '/var/www/app1.4linux.com.br/public_html',
-  docroot_owner => 'www-data',
-  docroot_group => 'www-data',
-  options       => ['Indexes','FollowSymLinks','MultiViews'],
-  override      => ['none'],
-  proxy_pass => [
-    {
-      'path' => '/app3',
-      'url'  => 'http://localhost:82/app3'
-    },
-  ],
+set_vhosts{
+  "app1" : port => 80, index => 1;
+  "app2" : port => 81, index => 2;
+  "app3" : port => 82, index => 3;
 }
 
 exec { "reload":
   command => "/etc/init.d/apache2 reload",
-  refreshonly => true,
-  require => Service[[apache2]],
+  user => "root",
 }
-
-exec { "restart":
-  command => "/etc/init.d/apache2 restart",
-  refreshonly => true,
-  require => Service[[apache2]],
-}
-
