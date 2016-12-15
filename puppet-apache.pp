@@ -1,28 +1,28 @@
-$app1 = 'app1.linux.com.br'
-$app2 = 'app2.linux.com.br'
-$app3 = 'app3.linux.com.br'
+class { '::apache': }
 
-define create_index($domain, $index){
+define create_index($index){
   # create a directory      
-  file {["/var/www/${domain}", "/var/www/${domain}/public_html"]:
-    replace => 'yes', # this is the important property
-    ensure => 'directory',
-    recurse => true,
+  file {[
+    "/var/www/app${index}.4linux.com.br",
+    "/var/www/app${index}.4linux.com.br/public_html"]:
+      ensure => 'directory',
+      recurse => true,
   }
 
-  file { "/var/www/${domain}/public_html/index.html":
+  file { "/var/www/app${index}.4linux.com.br/public_html/index.html":
     ensure  => 'present',
-    replace => 'yes', # this is the important property
-    content => "<h1>INSTANCIA1</h1>",
+    replace => 'yes',
+    content => "<h1>INSTANCIA${index}</h1>",
     mode    => '0644',
   }
 }
 
 create_index{
-  "1" : domain => $app1, index => 1;
+  "app1" : index => 1;
+  "app2" : index => 2;
+  "app3" : index => 3;
 }
 
-# class { '::apache': }
 #
 # # Most basic vhost
 # apache::vhost { 'app1.4linux.com.br':
