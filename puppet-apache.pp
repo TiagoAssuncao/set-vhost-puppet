@@ -1,5 +1,9 @@
 class { '::apache': }
 
+exec { "reload":
+  command => "/etc/init.d/apache2 reload",
+  user => "root",
+}
 define create_file($index){
   # create a directory      
   file {[
@@ -12,19 +16,18 @@ define create_file($index){
   file { "/var/www/app${index}.4linux.com.br/public_html/index.html":
     ensure  => 'present',
     replace => 'yes',
-    content => "<h1>INSTANCIA${index}</h1>",
+    content => "<h1>INSTANCIA${index}a</h1>",
     mode    => '0644',
   }
 }
 
 define set_vhosts($port, $index){
-  apache::vhost { 'app1.4linux.com.br':
-    port    => $port,
-    docroot => "/var/www/app${index}.4linux.com.br/public_html",
-    docroot_owner => 'www-data',
-    docroot_group => 'www-data',
-    options       => ['Indexes','FollowSymLinks','MultiViews'],
-    override      => ['none'],
+  apache::vhost { "app${index}.4linux.com.br":
+    servername    =>  "app${index}.4linux.com.br",
+    port          => $port,
+    docroot       => "/var/www/app${index}.4linux.com.br/public_html",
+    options       => ['Includes'],
+    require => Exec['reload'],
   }
 }
 
@@ -40,7 +43,3 @@ set_vhosts{
   "app3" : port => 82, index => 3;
 }
 
-exec { "reload":
-  command => "/etc/init.d/apache2 reload",
-  user => "root",
-}
